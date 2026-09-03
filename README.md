@@ -22,9 +22,15 @@ TestStruct = Struct "TestStruct"
   , ("c", Bits32)
   , ("d", Bits64) ]
 
+-- the usual FFI declaration
 %foreign "C:printStruct,libffisafe_test"
 printStruct : TestStruct -> PrimIO ()
 
+-- newRef creates reference with lifetime a'
+--
+-- dereferencing the reference occurs inside `safeFFI`,
+-- such that typical users never have to realize an lifetime-less
+-- pointer
 test : IO ()
 test = runScopedIO $ \a' => do
   x <- newRef { cty = TestStruct }
@@ -34,12 +40,16 @@ test = runScopedIO $ \a' => do
     , the Bits64 50404020205 )
   safeFFI printStruct [x]
 
+-- references of an outer scope can seamlessly
+-- used in a subscope
 testScope1 : IO Int
 testScope1 = runScopedIO $ \a' => do
   x <- newRef { cty = Int } $ the Int 10
   runSubScopedIO a' $ \b', _ => do
     readRef x
 
+-- references can escape their subscope but
+-- can't be used (as with the ST monad)
 failing "Can't solve constraint"
   testScope2 : IO Int
   testScope2 = runScopedIO $ \a' => do
