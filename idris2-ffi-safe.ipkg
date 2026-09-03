@@ -1,0 +1,9 @@
+package idris2-ffi-safe
+version = 0.0.1
+
+modules = System.FFI.Safe
+
+main = System.FFI.Safe
+
+sourcedir = "src"
+
